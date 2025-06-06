@@ -2,7 +2,7 @@
 
 # Add igzip_cli program
 add_executable(igzip_cli igzip_cli.c)
-target_link_libraries(igzip_cli PRIVATE isal)
+target_link_libraries(igzip_cli PRIVATE isal_static) # Changed from isal
 
 install(TARGETS igzip_cli
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -17,7 +17,7 @@ add_subdirectory(fuzz)
 # Helper function to create and link a test
 function(add_isal_test test_name)
     add_executable(${test_name} ${ARGN})
-    target_link_libraries(${test_name} PRIVATE isal)
+    target_link_libraries(${test_name} PRIVATE isal_static) # Changed from isal
     add_test(NAME ${test_name} COMMAND ${test_name})
     # Add labels for tests if desired, e.g., based on module
     # set_tests_properties(${test_name} PROPERTIES LABELS "module_X_test")
@@ -45,7 +45,7 @@ add_isal_test(crc_multibinary_test ../crc/crc_multibinary_test.c ../crc/crc_ref.
 # crc64_multibinary_test uses the same source as crc_multibinary_test but with a different define
 add_executable(crc64_multibinary_test ../crc/crc_multibinary_test.c ../crc/crc_ref.h)
 target_compile_definitions(crc64_multibinary_test PRIVATE CRC64_TEST)
-target_link_libraries(crc64_multibinary_test PRIVATE isal)
+    target_link_libraries(crc64_multibinary_test PRIVATE isal_static) # Explicitly update here too
 add_test(NAME crc64_multibinary_test COMMAND crc64_multibinary_test)
 
 

@@ -1,61 +1,164 @@
-# ISA-L Build Details
+# Building ISA-L
 
-## Build tools
+ISA-L can be built using Autotools on Linux and macOS, or using Nmake on Windows with MSVC.
+This document also describes the newer CMake-based build system, which is cross-platform.
 
-NASM: For x86-64 builds it is highly recommended to get an up-to-date version of
-[nasm] that can understand the latest instruction sets.
-Minimum version of NASM is 2.14.01, supporting all the ISA needed for the library.
-The configure or make tools can check for this minimum version.
+## Prerequisites
 
-    checking for nasm... yes
-    checking for modern nasm... yes
+*   **For Autotools (Linux/macOS):**
+    *   Autoconf, Automake, Libtool
+    *   GCC or Clang compiler
+    *   NASM assembler (version 2.14 or later recommended for x86_64)
+*   **For Nmake (Windows):**
+    *   Microsoft Visual Studio (for `cl.exe` compiler and `nmake.exe`)
+    *   NASM assembler (version 2.14 or later recommended)
+*   **For CMake (Linux, macOS, Windows):**
+    *   CMake (version 3.12 or later)
+    *   A suitable C compiler (GCC, Clang, MSVC)
+    *   NASM assembler (version 2.14 or later recommended for x86_64 builds)
+    *   Ninja or Make (for Linux/macOS), Visual Studio or Ninja (for Windows)
 
-If an appropriate nasm is not available from your distro, it is simple to build
-from source or download an executable from [nasm].
+## Building with Autotools (Linux/macOS)
 
-    git clone --depth=10 https://github.com/netwide-assembler/nasm
-    cd nasm
+1.  **Generate configure script:**
+    ```sh
     ./autogen.sh
+    ```
+
+2.  **Run configure script:**
+    ```sh
     ./configure
+    ```
+    Common options:
+    *   `--prefix=/path/to/install` (default is /usr/local)
+    *   `--enable-debug` (to build with debug symbols)
+
+3.  **Build the library:**
+    ```sh
     make
-    sudo make install
+    ```
 
-## Windows Build Environment Details
+4.  **Run tests (optional):**
+    ```sh
+    make check
+    ```
 
-The windows dynamic and static libraries can be built with the nmake tool on the
-windows command line when appropriate paths and tools are setup as follows.
+5.  **Install the library:**
+    ```sh
+    make install
+    ```
 
-### Download nasm and put into path
+## Building with Nmake (Windows)
 
-Download and install [nasm] and add location to path.
+1.  **Open a command prompt** that has `cl.exe`, `nmake.exe`, and `nasm.exe` in the PATH.
+    (e.g., "x64 Native Tools Command Prompt for VS")
 
-    set PATH=%PATH%;C:\Program Files\NASM
+2.  **Build the library:**
+    ```sh
+    nmake -f Makefile.nmake
+    ```
+    This typically builds both static and shared libraries.
 
-### Setup compiler environment
+3.  **To build tests or examples:**
+    Refer to targets in `Makefile.nmake` (e.g., `nmake -f Makefile.nmake checks`).
 
-Install compiler and run environment setup script.
+## Building with CMake (Cross-Platform)
 
-Compilers for windows usually have a batch file to setup environment variables
-for the command line called `vcvarsall.bat` or `compilervars.bat` or a link to
-run these. For Visual Studio this may be as follows for Community edition.
+The CMake build system allows for building ISA-L on various platforms including Linux, macOS, and Windows with different generator backends (Makefiles, Ninja, Visual Studio, etc.).
 
-    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64
+### General CMake Steps:
 
-For the Intel compiler the path is typically as follows where yyyy, x, zzz
-represent the version.
+1.  **Create a build directory:**
+    It's recommended to build ISA-L out-of-source.
+    ```sh
+    mkdir build
+    cd build
+    ```
 
-    C:\Program Files (x86)\IntelSWTools\system_studio_for_windows_yyyy.x.zzz\compilers_and_libraries_yyyy\bin\compilervars.bat intel64
+2.  **Configure with CMake:**
+    Run CMake from the build directory, pointing it to the root of the ISA-L source tree.
+    ```sh
+    # For Linux/macOS (using Makefiles generator by default)
+    cmake ..
 
-### Build ISA-L libs and copy to appropriate place
+    # For Linux/macOS (using Ninja generator)
+    cmake -G Ninja ..
 
-Run `nmake /f Makefile.nmake`
+    # For Windows (using Visual Studio generator, e.g., VS 2019)
+    # Open "x64 Native Tools Command Prompt for VS" or ensure MSVC vars are set
+    cmake -G "Visual Studio 16 2019" -A x64 ..
 
-This should build isa-l.dll, isa-l.lib and isa-l_static.lib. You may want to
-copy the libs to a system directory in the dynamic linking path such as
-`C:\windows\system32` or to a project directory.
+    # For Windows (using Ninja generator with MSVC compiler)
+    # Open "x64 Native Tools Command Prompt for VS"
+    cmake -G Ninja ..
+    ```
 
-To build a simple program with a static library.
+    **Common CMake Options:**
+    You can pass options to CMake using `-D<option_name>=<value>`.
+    *   `-DCMAKE_INSTALL_PREFIX=/path/to/install`: Specify the installation directory (e.g., `C:/libs/isa-l` on Windows).
+    *   `-DCMAKE_BUILD_TYPE=Release`: Build type (Debug, Release, RelWithDebInfo, MinSizeRel). Defaults to Debug if not specified by some generators.
+    *   `-DBUILD_SHARED_LIBS=ON`: Build shared libraries in addition to static ones (default is OFF).
+    *   `-DBUILD_TESTS=ON`: Build test programs (default is ON).
+    *   `-DBUILD_EXAMPLES=ON`: Build example programs (default is ON).
+    *   `-DENABLE_DEBUG=ON`: Enable internal debug messages in the library (default is OFF).
+    *   `-DENABLE_AVX512=ON`: Enable AVX512 compilation for EC and RAID modules on x86_64 (default is ON, requires compatible compiler).
 
-    cl /Fe: test.exe test.c isa-l_static.lib
+3.  **Build the library:**
+    ```sh
+    # If using Makefiles or Ninja
+    cmake --build .
 
-[nasm]: https://www.nasm.us
+    # Or directly with make/ninja
+    # make
+    # ninja
+
+    # If using Visual Studio generator, you can open the .sln file in the build directory
+    # or use msbuild:
+    # msbuild ISA-L.sln /p:Configuration=Release
+    ```
+
+4.  **Run tests (if `BUILD_TESTS` was ON):**
+    CTest is used to run the tests.
+    ```sh
+    # From the build directory
+    ctest
+    # For verbose output
+    ctest -V
+    ```
+
+5.  **Install the library:**
+    ```sh
+    # If using Makefiles or Ninja
+    cmake --build . --target install
+
+    # Or directly with make/ninja (if an install target is generated)
+    # make install
+    # ninja install
+
+    # If using Visual Studio, the INSTALL project can be built from the IDE or msbuild
+    # msbuild INSTALL.vcxproj /p:Configuration=Release
+    ```
+
+### Example: Release build on Linux with Ninja
+
+```sh
+mkdir build && cd build
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/isa-l_install ..
+ninja
+ninja test  # Or ctest
+ninja install
+```
+
+### Example: Release build on Windows with Visual Studio 2019
+
+Ensure you are in an "x64 Native Tools Command Prompt for VS 2019".
+```bat
+mkdir build
+cd build
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="C:/Program Files/isa-l" ..
+cmake --build . --config Release
+ctest -C Release
+cmake --build . --target INSTALL --config Release
+```
+
+This provides a comprehensive guide for developers wanting to build ISA-L using either the existing systems or the new CMake system.

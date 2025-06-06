@@ -6,7 +6,7 @@ endif()
 # Helper function to create and link an example program
 function(add_isal_example example_name)
     add_executable(${example_name} ${ARGN})
-    target_link_libraries(${example_name} PRIVATE isal)
+    target_link_libraries(${example_name} PRIVATE isal_static) # Changed from isal
     # Examples are not typically added to CTest unless they are self-checking
 endfunction()
 
