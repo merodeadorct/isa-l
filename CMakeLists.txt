@@ -21,28 +21,39 @@ endif()
 message(STATUS "Target architecture: ${TARGET_ARCH}")
 
 if(TARGET_ARCH STREQUAL "x86_64")
-    find_package(NASM)
-    if(NOT NASM_FOUND)
-        message(FATAL_ERROR "NASM not found. Please install NASM.")
+    find_program(NASM_EXECUTABLE nasm)
+    if(NOT NASM_EXECUTABLE)
+        message(FATAL_ERROR "NASM executable not found. Please install NASM and ensure it is in the PATH.")
+    else()
+        message(STATUS "Found NASM: ${NASM_EXECUTABLE}")
+        set(CMAKE_ASM_NASM_COMPILER ${NASM_EXECUTABLE}) # Set the compiler path
+        enable_language(ASM_NASM) # Enable the language using the found compiler
     endif()
-    # Add NASM build rules for .asm files
-    enable_language(ASM_NASM)
-    set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
-    if(WIN32)
-        set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
-    elseif(APPLE)
-        set(CMAKE_ASM_NASM_OBJECT_FORMAT macho64)
-        set(CMAKE_ASM_NASM_FLAGS_INIT "--prefix=_")
-    endif()
-    # Check for Intel CET
-    include(CheckCSourceCompiles)
-    check_c_source_compiles("#ifndef __CET__
-#error CET is not enabled
-#endif
-int main() {return 0;}" INTEL_CET_ENABLED)
-    if(INTEL_CET_ENABLED)
-        add_definitions(-DINTEL_CET_ENABLED)
-    endif()
+
+    # Set NASM flags based on OS (after NASM is confirmed found and language enabled)
+    if(CMAKE_ASM_NASM_COMPILER) # Proceed if NASM setup was successful
+        if(WIN32)
+            set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
+        elseif(APPLE)
+            set(CMAKE_ASM_NASM_OBJECT_FORMAT macho64)
+            set(CMAKE_ASM_NASM_FLAGS_INIT "--prefix=_")
+        else() # Linux, other ELF systems
+            set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
+        endif()
+
+        # Check for Intel CET
+        # This check should be within the 'if(CMAKE_ASM_NASM_COMPILER)' block if it depends on NASM features,
+        # or if it's a C check, it can be outside but within TARGET_ARCH STREQUAL "x86_64".
+        # Based on its nature (C source compile), it's a C compiler feature check.
+        include(CheckCSourceCompiles)
+        check_c_source_compiles("#ifndef __CET__\n#error CET is not enabled\n#endif\nint main() {return 0;}" INTEL_CET_ENABLED)
+        if(INTEL_CET_ENABLED)
+            add_definitions(-DINTEL_CET_ENABLED)
+            message(STATUS "Intel CET detection: Enabled")
+        else()
+            message(STATUS "Intel CET detection: Not enabled or compiler does not define __CET__")
+        endif()
+    endif() # End of if(CMAKE_ASM_NASM_COMPILER)
 elif(TARGET_ARCH STREQUAL "riscv64")
     # Check for RVV support
     include(CheckCSourceCompiles)
