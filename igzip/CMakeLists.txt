@@ -42,7 +42,7 @@ set(IGZIP_SOURCES_X86_64
     igzip_decode_block_stateless_01.asm
     igzip_decode_block_stateless_04.asm
     # level_buf
-    write_lz_h1_gr_bt.asm
+    igzip_icf_body_h1_gr_bt.asm # Changed line
     # match_hist
     update_hash_avx2.asm
     update_hash_avx512.asm

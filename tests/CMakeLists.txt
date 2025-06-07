@@ -24,12 +24,26 @@ function(add_isal_test test_name)
 endfunction()
 
 # CRC module tests
-add_isal_test(crc_simple_test ../crc/crc_simple_test.c ../crc/crc_ref.h) # Assumes crc_ref.h is needed
-add_isal_test(crc_byte_test ../crc/crc_byte_test.c ../crc/crc_ref.h)
+add_isal_test(crc_simple_test ../crc/crc_simple_test.c ../crc/crc_ref.h)
+# crc_byte_test removed
 add_isal_test(crc16_t10dif_test ../crc/crc16_t10dif_test.c ../crc/crc_ref.h)
-add_isal_test(crc32_ieee_test ../crc/crc32_ieee_test.c ../crc/crc_ref.h)
-add_isal_test(crc32_iscsi_test ../crc/crc32_iscsi_test.c ../crc/crc_ref.h)
-add_isal_test(crc32_gzip_refl_test ../crc/crc32_gzip_refl_test.c ../crc/crc_ref.h)
+
+# CRC32 tests using crc32_funcs_test.c
+add_executable(crc32_ieee_test ../crc/crc32_funcs_test.c ../crc/crc_ref.h)
+target_compile_definitions(crc32_ieee_test PRIVATE TEST_CRC32_IEEE) # Assuming define
+target_link_libraries(crc32_ieee_test PRIVATE isal_static)
+add_test(NAME crc32_ieee_test COMMAND crc32_ieee_test)
+
+add_executable(crc32_iscsi_test ../crc/crc32_funcs_test.c ../crc/crc_ref.h)
+target_compile_definitions(crc32_iscsi_test PRIVATE TEST_CRC32_ISCSI) # Assuming define
+target_link_libraries(crc32_iscsi_test PRIVATE isal_static)
+add_test(NAME crc32_iscsi_test COMMAND crc32_iscsi_test)
+
+add_executable(crc32_gzip_refl_test ../crc/crc32_funcs_test.c ../crc/crc_ref.h)
+target_compile_definitions(crc32_gzip_refl_test PRIVATE TEST_CRC32_GZIP_REFL) # Assuming define
+target_link_libraries(crc32_gzip_refl_test PRIVATE isal_static)
+add_test(NAME crc32_gzip_refl_test COMMAND crc32_gzip_refl_test)
+
 add_isal_test(crc64_ecma_test ../crc/crc64_funcs_test.c ../crc/crc64_ref.h) # crc64_funcs_test covers multiple CRC64 types
     set_source_files_properties(../crc/crc64_funcs_test.c PROPERTIES COMPILE_DEFINITIONS "TEST_CRC64_ECMA")
 add_isal_test(crc64_iso_test ../crc/crc64_funcs_test.c ../crc/crc64_ref.h)
