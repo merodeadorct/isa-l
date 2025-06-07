@@ -186,8 +186,8 @@ install(FILES ${ISA_L_H_GENERATED_FILE}
 # They should be installed into an isa-l subdirectory of the main include directory.
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/isa-l
+    COMPONENT libisal_devel  # Moved COMPONENT before FILES_MATCHING
     FILES_MATCHING PATTERN "*.h"
-    COMPONENT libisal_devel
     # Exclude .asm files if any were in include/ (they are not in ISA-L's include/)
 )
 
